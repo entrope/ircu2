@@ -57,8 +57,8 @@ RPATH = ${DPATH}/remote.motd
 CC = @CC@
 CFLAGS = @CFLAGS@
 CPPFLAGS = -I. -I.. -I${top_srcdir}/include @CPPFLAGS@
-LDFLAGS = @LDFLAGS@
-LIBS = @LIBS@
+LDFLAGS = @LDFLAGS@ -g
+LIBS = @LIBS@ -ldl
 
 #### End of system configuration section. ####
 PURIFY =

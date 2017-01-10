@@ -33,6 +33,8 @@
  * @brief Implementation of DNS and ident lookups.
  * @version $Id$
  */
+#define _GNU_SOURCE
+
 #include "config.h"
 
 #include "s_auth.h"
@@ -68,6 +70,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <dlfcn.h>
+#include <link.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 
@@ -205,6 +209,8 @@ struct IAuth {
 
 /** Active instance of IAuth. */
 static struct IAuth *iauth;
+/** Last file file descriptor we intentionally set to iauth's stdin. */
+static int iauth_input_fd = -1;
 /** Freelist of AuthRequest structures. */
 static struct AuthRequest *auth_freelist;
 
@@ -1366,6 +1372,8 @@ int iauth_do_spawn(struct IAuth *iauth, int automatic)
   }
 
   /* Initialize the socket structure to talk to the child. */
+  iauth_input_fd = s_io[0];
+  Debug((DEBUG_INFO, "New IAuth input socket: %d", s_io[0]));
   res = socket_add(i_socket(iauth), iauth_sock_callback, iauth,
                    SS_CONNECTED, SOCK_EVENT_READABLE, s_io[0]);
   if (!res) {
@@ -1414,6 +1422,7 @@ int iauth_do_spawn(struct IAuth *iauth, int automatic)
     socket_del(i_socket(iauth));
     s_fd(i_socket(iauth)) = -1;
   fail_1:
+    iauth_input_fd = -1;
     close(s_io[1]);
     close(s_io[0]);
     return res;
@@ -1437,6 +1446,7 @@ int iauth_do_spawn(struct IAuth *iauth, int automatic)
    * Duplicate our end of the socket to stdin, stdout and stderr.
    * Then close all the higher-numbered FDs and exec the process.
    */
+   s_fd(i_socket(iauth)) = -1;
   if (dup2(s_io[1], 0) == 0
       && dup2(s_io[1], 1) == 1
       && dup2(s_err[1], 2) == 2) {
@@ -1522,6 +1532,7 @@ static void iauth_disconnect(struct IAuth *iauth)
     close(s_fd(i_socket(iauth)));
     socket_del(i_socket(iauth));
     s_fd(i_socket(iauth)) = -1;
+    iauth_input_fd = -1;
   }
 }
 
@@ -2499,10 +2510,51 @@ void report_iauth_conf(struct Client *cptr, const struct StatDesc *sd, char *par
  void report_iauth_stats(struct Client *cptr, const struct StatDesc *sd, char *param)
 {
     struct SLink *link;
+    struct Client *sptr;
+    int fd;
+
+    fd = iauth ? s_fd(i_socket(iauth)) : -1;
+    sptr = (fd >= 0) ? LocalClientArray[fd] : NULL;
+    send_reply(cptr, SND_EXPLICIT | RPL_STATSDEBUG,
+               ":File desc %d (last %d), client %s",
+               fd, iauth_input_fd,
+               sptr ? cli_name(sptr) : "<none>");
 
     if (iauth) for (link = iauth->i_stats; link; link = link->next)
     {
         send_reply(cptr, SND_EXPLICIT | RPL_STATSDEBUG, ":%s",
                    link->value.cp);
     }
+}
+
+int close(int fd)
+{
+  static int (*chain)(int);
+
+  if (!chain)
+  {
+    chain = dlsym(RTLD_NEXT, "close");
+    assert(chain != NULL);
+  }
+
+  if (iauth && (fd == s_fd(i_socket(iauth))))
+  {
+    Dl_info info;
+    void *caller;
+
+    caller = __builtin_return_address(0);
+    /* caller = __builtin_extract_return_address(caller); */
+    if (!dladdr(caller, &info))
+      Debug((DEBUG_NOTICE, "close(%d) closing iauth FD, from %p", fd, caller));
+    else if (info.dli_sname)
+      Debug((DEBUG_NOTICE, "close(%d) closing iauth FD, from %s", fd, info.dli_sname));
+    else
+    {
+      Debug((DEBUG_NOTICE, "close(%d) closing iauth FD, from %p", fd, caller));
+      Debug((DEBUG_INFO, "dladdr() -> %s + %lx", info.dli_fname,
+        (unsigned long)caller - (unsigned long)info.dli_fbase));
+    }
+  }
+
+  return chain(fd);
 }
