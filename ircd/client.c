@@ -133,9 +133,9 @@ static int privs_defaults_set;
  *   is null.
  */
 void
-client_set_privs(struct Client *client, struct ConfItem *oper, int forceOper)
+client_set_privs(struct Client *client, struct ConfItem *oper, int forceOper, int caller_line)
 {
-  struct Privs *source, *defaults;
+  struct Privs *source, *defaults, orig_privs;
   struct ConnectionClass *class;
   enum Priv priv;
 
@@ -145,8 +145,14 @@ client_set_privs(struct Client *client, struct ConfItem *oper, int forceOper)
   /* Clear out client's privileges. */
   memset(cli_privs(client), 0, sizeof(struct Privs));
 
-  if (!IsAnOper(client) || (!oper && !forceOper))
-      return;
+  if (!IsAnOper(client) || (!oper && !forceOper)) {
+    Debug((DEBUG_INFO, "client_set_privs(%s, %s, %d, %d): early out",
+	cli_name(client), oper ? oper->name : "(null)", forceOper,
+	caller_line));
+    return;
+  }
+
+  memcpy(&orig_privs, cli_privs(client), sizeof(orig_privs));
 
   if (!privs_defaults_set)
   {
@@ -231,6 +237,10 @@ client_set_privs(struct Client *client, struct ConfItem *oper, int forceOper)
     ClrPriv(client, PRIV_OPMODE);
     ClrPriv(client, PRIV_BADCHAN);
   }
+
+  Debug((DEBUG_INFO, "client_set_privs(%s, %s, %d, %d): %lx -> %lx",
+	cli_name(client), oper ? oper->name : "(null)", forceOper,
+	caller_line, orig_privs.bits[0], cli_privs(client)->bits[0]));
 }
 
 /** Array mapping privilege values to names and vice versa. */

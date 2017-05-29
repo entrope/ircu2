@@ -116,7 +116,7 @@ static void make_oper(struct Client *sptr, struct Client *dptr)
     det_confs_butmask(dptr, CONF_CLIENT & ~CONF_OPERATOR);
     set_snomask(dptr, SNO_OPERDEFAULT, SNO_ADD);
     cli_max_sendq(dptr) = 0; /* Get the sendq from the oper's class */
-    client_set_privs(dptr, NULL, 1);
+    client_set_privs(dptr, NULL, 1, 0);
 
     send_umode_out(dptr, dptr, &old_mode, HasPriv(dptr, PRIV_PROPAGATE));
     send_reply(dptr, RPL_YOUREOPER);
@@ -147,7 +147,7 @@ static void de_oper(struct Client *dptr)
       set_snomask(dptr, 0, SNO_SET);
     }
     det_confs_butmask(dptr, CONF_CLIENT & ~CONF_OPERATOR);
-    client_set_privs(dptr, NULL, 0);
+    client_set_privs(dptr, NULL, 0, 0);
   }
 }
 

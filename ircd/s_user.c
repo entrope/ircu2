@@ -477,7 +477,7 @@ int register_user(struct Client *cptr, struct Client *sptr)
       FlagSet(&flags, FLAG_ACCOUNT);
     else
       FlagClr(&flags, FLAG_ACCOUNT);
-    client_set_privs(sptr, NULL, 0);
+    client_set_privs(sptr, NULL, 0, __LINE__);
     send_umode(cptr, sptr, &flags, ALL_UMODES);
     if ((cli_snomask(sptr) != SNO_DEFAULT) && HasFlag(sptr, FLAG_SERVNOTICE))
       send_reply(sptr, RPL_SNOMASK, cli_snomask(sptr), cli_snomask(sptr));
@@ -1162,7 +1162,7 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
     if (!FlagHas(&setflags, FLAG_OPER) && IsOper(sptr)) {
       /* user now oper */
       ++UserStats.opers;
-      client_set_privs(sptr, NULL, 0); /* may set propagate privilege */
+      client_set_privs(sptr, NULL, 0, __LINE__); /* may set propagate privilege */
     }
     /* remember propagate privilege setting */
     if (HasPriv(sptr, PRIV_PROPAGATE)) {
@@ -1175,7 +1175,7 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
         assert(UserStats.opers > 0);
         --UserStats.opers;
       }
-      client_set_privs(sptr, NULL, 0); /* will clear propagate privilege */
+      client_set_privs(sptr, NULL, 0, __LINE__); /* will clear propagate privilege */
     }
     if (FlagHas(&setflags, FLAG_INVISIBLE) && !IsInvisible(sptr)) {
       assert(UserStats.inv_clients > 0);
