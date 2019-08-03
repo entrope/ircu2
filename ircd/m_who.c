@@ -189,7 +189,6 @@ int m_who(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   char *p;                      /* Scratch char pointer                     */
   char *qrt;                    /* Pointer to the query type                */
   static char mymask[512];      /* To save the mask before corrupting it    */
-  static char whox_buf[512];    /* Holds a partial line for logging         */
 
   /* Let's find where is our mask, and if actually contains something */
   mymask[0] = '\0';
