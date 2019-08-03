@@ -129,7 +129,7 @@ static int maybe_do_who(struct Client *sptr, struct Client *acptr, struct Channe
                            we'll never have to show this acptr in this query */
   if ((bitsel & WHOSELECT_OPER) && !SeeOper(sptr,acptr))
     return 0;
-  if (matchsel
+  if ((*mymask != '\0')
       && (!(matchsel & WHO_FIELD_NIC)
           || matchexec(cli_name(acptr), mymask, minlen))
       && (!(matchsel & WHO_FIELD_UID)
@@ -192,6 +192,7 @@ int m_who(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   static char whox_buf[512];    /* Holds a partial line for logging         */
 
   /* Let's find where is our mask, and if actually contains something */
+  mymask[0] = '\0';
   mask = ((parc > 1) ? parv[1] : 0);
   if (parc > 3 && parv[3])
     mask = parv[3];
