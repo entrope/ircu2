@@ -369,6 +369,7 @@ static struct FeatureDesc {
   F_S(WHOX_LOG_CHANNEL, FEAT_NULL, 0, 0),
   F_S(WHOX_LOG_FILE, 0, "whox.log", 0),
   F_S(WHOX_LOG_SERVER, FEAT_NULL, 0, 0),
+  F_S(WHOX_XQ_SERVER, FEAT_NULL, 0, 0),
 
   /* HEAD_IN_SAND Features */
   F_B(HIS_SNOTICES, 0, 1, 0),

@@ -80,17 +80,28 @@ static char whox_line[BUFSIZE];
 void whox_check_server(struct Client *sptr)
 {
   struct Channel *chptr;
+  const char *srv_name;
+  const char *xq_name;
   char buf[BUFSIZE];
 
-  if (!whox_log
-      || ircd_strcmp(cli_name(sptr), feature_str(FEAT_WHOX_LOG_SERVER))
-      || !(chptr = FindChannel(feature_str(FEAT_WHOX_LOG_CHANNEL))))
+  if (!whox_log)
+    return;
+
+  xq_name = feature_str(FEAT_WHOX_XQ_SERVER);
+  srv_name = xq_name ? xq_name : feature_str(FEAT_WHOX_LOG_SERVER);
+  if (ircd_strcmp(cli_name(sptr), srv_name))
+    return;
+  if (!xq_name && !(chptr = FindChannel(feature_str(FEAT_WHOX_LOG_CHANNEL))))
     return;
 
   rewind(whox_log);
   while (fgets(buf, sizeof(buf), whox_log)) {
-    sendcmdto_channel_butone(&me, CMD_PRIVATE, chptr, NULL, SKIP_DEAF |
-                             SKIP_BURST, "%H :%s", chptr, buf);
+    if (xq_name) {
+      sendcmdto_one(&me, CMD_XQUERY, sptr, "%C WHOX :%s", sptr, buf);
+    } else {
+      sendcmdto_channel_butone(&me, CMD_PRIVATE, chptr, NULL, SKIP_DEAF |
+                               SKIP_BURST, "%H :%s", chptr, buf);
+    }
   }
   fclose(whox_log);
   whox_log = NULL;
@@ -110,14 +121,16 @@ static void log_whox(struct Client* sptr, const char *format, ...)
   struct Channel *chptr;
   const char *srv_name;
   const char *log_name;
+  const char *xq_name;
   char buf[BUFSIZE];
 
+  xq_name = feature_str(FEAT_WHOX_XQ_SERVER);
   chptr = FindChannel(feature_str(FEAT_WHOX_LOG_CHANNEL));
-  if (!chptr)
+  if (!xq_name && !chptr)
     return;
 
   /* Do we only log to the network if some server is linked? */
-  srv_name = feature_str(FEAT_WHOX_LOG_SERVER);
+  srv_name = xq_name ? xq_name : feature_str(FEAT_WHOX_LOG_SERVER);
   if (srv_name && !(srv = FindServer(srv_name))) {
     /* If no log file configured, exit, even if there was a log file
      * already open (i.e. the admin turned off that config option).
@@ -140,6 +153,8 @@ static void log_whox(struct Client* sptr, const char *format, ...)
   if (whox_log) {
     fputs(buf, whox_log);
     fputc('\n', whox_log);
+  } else if (xq_name) {
+    sendcmdto_one(&me, CMD_XQUERY, srv, "%C WHOX :%s", srv, buf);
   } else {
     sendcmdto_channel_butone(&me, CMD_PRIVATE, chptr, NULL, SKIP_DEAF |
                              SKIP_BURST, "%H :%s", chptr, buf);
