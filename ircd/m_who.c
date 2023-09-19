@@ -225,6 +225,14 @@ int m_who(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
         counter++;
         switch (ch)
         {
+          case 'a':
+          case 'A':
+            fields |= WHO_FIELD_ACC;
+            break;
+          case 'b':
+          case 'B':
+            fields |= WHO_FIELD_ATS;
+            break;
           case 'c':
           case 'C':
             fields |= WHO_FIELD_CHA;
@@ -253,6 +261,10 @@ int m_who(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
           case 'N':
             fields |= WHO_FIELD_NIC;
             break;
+          case 'o':
+          case 'O':
+            fields |= WHO_FIELD_OPL;
+            break;
           case 'r':
           case 'R':
             fields |= WHO_FIELD_REN;
@@ -268,14 +280,6 @@ int m_who(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
           case 'u':
           case 'U':
             fields |= WHO_FIELD_UID;
-            break;
-          case 'a':
-          case 'A':
-            fields |= WHO_FIELD_ACC;
-            break;
-          case 'o':
-          case 'O':
-            fields |= WHO_FIELD_OPL;
             break;
           default:
             break;
@@ -384,6 +388,8 @@ int m_who(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
         matchsel &= ~WHO_FIELD_HOS;
       if ((minlen > ACCOUNTLEN))
         matchsel &= ~WHO_FIELD_ACC;
+      if ((minlen > 19)) /* int64_t .. but ew */
+        matchsel &= ~WHO_FIELD_ATS;
     }
 
     /* First of all loop through the clients in common channels */

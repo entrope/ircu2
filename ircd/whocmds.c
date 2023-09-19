@@ -244,6 +244,11 @@ void do_who(struct Client* sptr, struct Client* acptr, struct Channel* repchan,
       *(p1++) = '0';
   }
 
+  if (fields & WHO_FIELD_ATS)
+  {
+    p1 += ircd_snprintf(0, p1, 20, " %ld", (long)cli_user(acptr)->acc_create);
+  }
+
   if (fields & WHO_FIELD_OPL)
   {
       if (!chan || !IsChanOp(chan))
