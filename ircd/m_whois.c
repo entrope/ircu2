@@ -142,7 +142,7 @@ static void do_whois(struct Client* sptr, struct Client *acptr, int parc)
       && sptr != acptr ? &his : user->server;
   assert(user);
   send_reply(sptr, RPL_WHOISUSER, name, user->username, user->host,
-		   cli_info(acptr));
+             (long)cli_user(acptr)->acc_create, cli_info(acptr));
 
   /* Display the channels this user is on. */
   if (!IsChannelService(acptr))

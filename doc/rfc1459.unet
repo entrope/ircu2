@@ -2719,7 +2719,7 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
                   client removes and sets an AWAY message.
 
         311     RPL_WHOISUSER
-                        "<nick> <user> <host> * :<real name>"
+                        "<nick> <user> <host> <acc_create> :<real name>"
         312     RPL_WHOISSERVER
                         "<nick> <server> :<server info>"
         313     RPL_WHOISOPERATOR
@@ -2736,8 +2736,8 @@ RFC 1459              Internet Relay Chat Protocol              May 1993
                   there are enough parameters present, the answering
                   server must either formulate a reply out of the above
                   numerics (if the query nick is found) or return an
-                  error reply.  The '*' in RPL_WHOISUSER is there as
-                  the literal character and not as a wild card.  For
+                  error reply.  The account creation timestamp replaces
+                  a traditional '*' literal character after host.  For
                   each reply set, only RPL_WHOISCHANNELS may appear
                   more than once (for long lists of channel names).
                   The '@' and '+' characters next to the channel name

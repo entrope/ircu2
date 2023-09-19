@@ -654,7 +654,7 @@ static Numeric replyTable[] = {
 /* 310 */
   { 0 },
 /* 311 */
-  { RPL_WHOISUSER, "%s %s %s * :%s", "311" },
+  { RPL_WHOISUSER, "%s %s %s %ld :%s", "311" },
 /* 312 */
   { RPL_WHOISSERVER, "%s %s :%s", "312" },
 /* 313 */
